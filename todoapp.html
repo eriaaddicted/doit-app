@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoIT! - Умный планировщик задач</title>
+    <link rel="stylesheet" href="https://unpkg.com/@vkontakte/vkui/dist/vkui.css">
+    <style>
+        :root {
+            --vkui--color_background: #f5f5f5;
+            --vkui--color_header_background: #4680c2;
+            --green: #4bb34b;
+            --yellow: #ffb800;
+            --red: #e64646;
+            --gray: #a3adb8;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, system-ui, "Helvetica Neue", Roboto, sans-serif;
+            background-color: var(--vkui--color_background);
+            color: #222;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+        
+        .header {
+            padding: 20px 16px;
+            background: var(--vkui--color_header_background);
+            color: white;
+            text-align: center;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .app-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            letter-spacing: 0.5px;
+        }
+        
+        .quote {
+            font-style: italic;
+            margin: 10px 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .tasks-container {
+            padding: 16px;
+        }
+        
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid var(--gray);
+        }
+        
+        .task-item.green {
+            border-left-color: var(--green);
+            background: linear-gradient(90deg, rgba(75, 179, 75, 0.08) 0%, rgba(255, 255, 255, 1) 30%);
+        }
+        
+        .task-item.yellow {
+            border-left-color: var(--yellow);
+            background: linear-gradient(90deg, rgba(255, 184, 0, 0.08) 0%, rgba(255, 255, 255, 1) 30%);
+        }
+        
+        .task-item.red {
+            border-left-color: var(--red);
+            background: linear-gradient(90deg, rgba(230, 70, 70, 0.08) 0%, rgba(255, 255, 255, 1) 30%);
+        }
+        
+        .task-item.expired {
+            border-left-color: #99a2ad;
+            background: linear-gradient(90deg, rgba(153, 162, 173, 0.1) 0%, rgba(255, 255, 255, 1) 30%);
+        }
+        
+        .task-info {
+            flex-grow: 1;
+        }
+        
+        .task-title {
+            font-weight: 500;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+        
+        .task-time {
+            display: flex;
+            align-items: center;
+            color: #626d7a;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .time-icon {
+            margin-right: 6px;
+            font-size: 14px;
+        }
+        
+        .timer {
+            font-weight: 600;
+            font-size: 15px;
+            margin-left: 5px;
+        }
+        
+        .timer.green {
+            color: var(--green);
+        }
+        
+        .timer.yellow {
+            color: var(--yellow);
+        }
+        
+        .timer.red {
+            color: var(--red);
+        }
+        
+        .timer.expired {
+            color: #99a2ad;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: #818c99;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 6px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        .action-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .add-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--vkui--color_header_background);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .add-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .modal-title {
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #222;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #222;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d3d9de;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus {
+            border-color: #4680c2;
+            outline: none;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .button-primary {
+            background: var(--vkui--color_header_background);
+            color: white;
+        }
+        
+        .button-primary:hover {
+            background: #3d6ba5;
+        }
+        
+        .button-default {
+            background: #e7e8ec;
+            color: #222;
+        }
+        
+        .button-default:hover {
+            background: #d3d9de;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #99a2ad;
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .time-inputs {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .time-inputs .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="app-title">DoIT!</h1>
+            <div class="quote" id="quote">Загрузка цитаты...</div>
+        </div>
+        
+        <div class="tasks-container" id="tasks-container">
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">⏰</div>
+                <p>У вас пока нет задач.<br>Добавьте первую задачу!</p>
+            </div>
+        </div>
+        
+        <button class="add-button" id="add-button">+</button>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования задачи -->
+    <div class="modal" id="task-modal" style="display: none;">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modal-title">Добавить задачу</h3>
+            <div class="form-group">
+                <label for="task-title">Задача</label>
+                <input type="text" id="task-title" placeholder="Что нужно сделать?">
+            </div>
+            <div class="time-inputs">
+                <div class="form-group">
+                    <label for="task-hours">Часы</label>
+                    <select id="task-hours">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                        <option value="16">16</option>
+                        <option value="17">17</option>
+                        <option value="18">18</option>
+                        <option value="19">19</option>
+                        <option value="20">20</option>
+                        <option value="21">21</option>
+                        <option value="22">22</option>
+                        <option value="23">23</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-minutes">Минуты</label>
+                    <select id="task-minutes">
+                        <option value="0">00</option>
+                        <option value="5">05</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="25">25</option>
+                        <option value="30">30</option>
+                        <option value="35">35</option>
+                        <option value="40">40</option>
+                        <option value="45">45</option>
+                        <option value="50">50</option>
+                        <option value="55">55</option>
+                    </select>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="button button-default" id="cancel-button">Отмена</button>
+                <button class="button button-primary" id="save-task">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация VK Bridge
+        if (typeof vkBridge !== 'undefined') {
+            vkBridge.send('VKWebAppInit', {});
+        }
+        
+        // Цитаты для планирования времени
+        const quotes = [
+            "Время — самый ценный ресурс. Распоряжайся им мудро.",
+            "Планирование — это воплощение в жизнь твоих намерений.",
+            "Управляй своим временем, и ты управляешь своей жизнью.",
+            "Лучше спланировать день заранее, чем жалеть о потраченном времени вечером.",
+            "Маленькие ежедневные улучшения со временем приводят к большим результатам.",
+            "Не откладывай на завтра то, что можно сделать сегодня.",
+            "Успех — это последовательность правильных действий, совершаемых ежедневно."
+        ];
+        
+        // Обновляем цитату
+        function updateQuote() {
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('quote').textContent = randomQuote;
+        }
+        
+        // Обновляем цитату каждые 30 секунд
+        updateQuote();
+        setInterval(updateQuote, 30000);
+        
+        // Работа с задачами
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let editingIndex = null;
+        let timerInterval = null;
+        
+        // Элементы DOM
+        const tasksContainer = document.getElementById('tasks-container');
+        const emptyState = document.getElementById('empty-state');
+        const addButton = document.getElementById('add-button');
+        const taskModal = document.getElementById('task-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const taskTitleInput = document.getElementById('task-title');
+        const taskHoursSelect = document.getElementById('task-hours');
+        const taskMinutesSelect = document.getElementById('task-minutes');
+        const saveTaskButton = document.getElementById('save-task');
+        const cancelButton = document.getElementById('cancel-button');
+        
+        // Форматирование времени
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hrs > 0) {
+                return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            } else {
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
+        
+        // Получение цвета в зависимости от оставшегося времени
+        function getTimeColor(remaining, total) {
+            const percentage = (remaining / total) * 100;
+            
+            if (remaining <= 0) return 'expired';
+            if (percentage >= 70) return 'green';
+            if (percentage >= 30) return 'yellow';
+            return 'red';
+        }
+        
+        // Обновление отображения таймера
+        function updateTaskTimers() {
+            const now = Date.now();
+            
+            tasks.forEach((task, index) => {
+                if (task.endTime) {
+                    const remaining = Math.max(0, Math.floor((task.endTime - now) / 1000));
+                    const totalTime = task.totalSeconds;
+                    
+                    const timerElement = document.getElementById(`timer-${index}`);
+                    const progressElement = document.getElementById(`progress-${index}`);
+                    const taskElement = document.getElementById(`task-${index}`);
+                    
+                    if (timerElement && progressElement && taskElement) {
+                        const colorClass = getTimeColor(remaining, totalTime);
+                        
+                        // Обновляем текст таймера
+                        timerElement.textContent = formatTime(remaining);
+                        timerElement.className = `timer ${colorClass}`;
+                        
+                        // Обновляем текст прогресса
+                        const percentage = Math.max(0, (remaining / totalTime) * 100);
+                        progressElement.textContent = `${Math.round(percentage)}% осталось`;
+                        
+                        // Обновляем цвет задачи
+                        taskElement.className = `task-item ${colorClass}`;
+                    }
+                }
+            });
+        }
+        
+        // Функция отображения задач
+        function renderTasks() {
+            tasksContainer.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            const now = Date.now();
+            
+            tasks.forEach((task, index) => {
+                const taskElement = document.createElement('div');
+                
+                let remaining = 0;
+                let colorClass = 'green';
+                let timerText = '00:00';
+                let progressText = '100% осталось';
+                
+                if (task.endTime) {
+                    remaining = Math.max(0, Math.floor((task.endTime - now) / 1000));
+                    colorClass = getTimeColor(remaining, task.totalSeconds);
+                    timerText = formatTime(remaining);
+                    const percentage = Math.max(0, (remaining / task.totalSeconds) * 100);
+                    progressText = `${Math.round(percentage)}% осталось`;
+                }
+                
+                taskElement.id = `task-${index}`;
+                taskElement.className = `task-item ${colorClass}`;
+                
+                taskElement.innerHTML = `
+                    <div class="task-info">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-time">
+                            <span class="time-icon">⏱</span>
+                            Осталось: <span class="timer ${colorClass}" id="timer-${index}">${timerText}</span>
+                        </div>
+                        <div class="progress-text" id="progress-${index}">${progressText}</div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="action-btn" onclick="editTask(${index})">✏️</button>
+                        <button class="action-btn" onclick="deleteTask(${index})">🗑️</button>
+                    </div>
+                `;
+                
+                tasksContainer.appendChild(taskElement);
+            });
+            
+            // Запускаем интервал обновления таймеров
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTaskTimers, 1000);
+        }
+        
+        // Функция добавления задачи
+        function addTask() {
+            editingIndex = null;
+            modalTitle.textContent = 'Добавить задачу';
+            taskTitleInput.value = '';
+            taskHoursSelect.value = '0';
+            taskMinutesSelect.value = '0';
+            taskModal.style.display = 'flex';
+        }
+        
+        // Функция редактирования задачи
+        window.editTask = function(index) {
+            editingIndex = index;
+            const task = tasks[index];
+            modalTitle.textContent = 'Редактировать задачу';
+            taskTitleInput.value = task.title;
+            
+            // Рассчитываем часы и минуты из общего времени
+            const totalSeconds = task.totalSeconds;
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            
+            taskHoursSelect.value = hours;
+            taskMinutesSelect.value = minutes;
+            taskModal.style.display = 'flex';
+        };
+        
+        // Функция удаления задачи
+        window.deleteTask = function(index) {
+            tasks.splice(index, 1);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderTasks();
+        };
+        
+        // Функция сохранения задачи
+        function saveTask() {
+            const title = taskTitleInput.value.trim();
+            const hours = parseInt(taskHoursSelect.value);
+            const minutes = parseInt(taskMinutesSelect.value);
+            
+            if (!title) {
+                alert('Введите название задачи');
+                return;
+            }
+            
+            if (hours === 0 && minutes === 0) {
+                alert('Установите время выполнения задачи');
+                return;
+            }
+            
+            const totalSeconds = (hours * 3600) + (minutes * 60);
+            const endTime = Date.now() + (totalSeconds * 1000);
+            
+            const task = {
+                title,
+                totalSeconds,
+                endTime
+            };
+            
+            if (editingIndex !== null) {
+                tasks[editingIndex] = task;
+            } else {
+                tasks.push(task);
+            }
+            
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            taskModal.style.display = 'none';
+            renderTasks();
+        }
+        
+        // Обработчики событий
+        addButton.addEventListener('click', addTask);
+        saveTaskButton.addEventListener('click', saveTask);
+        cancelButton.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+        
+        // Закрытие модального окна при клике вне его
+        taskModal.addEventListener('click', (e) => {
+            if (e.target === taskModal) {
+                taskModal.style.display = 'none';
+            }
+        });
+        
+        // Инициализация приложения
+        renderTasks();
+    </script>
+</body>
+</html>
